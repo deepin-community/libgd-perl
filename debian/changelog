@@ -1,3 +1,58 @@
+libgd-perl (2.78-1) unstable; urgency=medium
+
+  * Team upload.
+  * Import upstream version 2.78.
+  * New test dependency: libtest-nowarnings-perl.
+  * Declare compliance with Debian Policy 4.6.2.
+  * Remove generated script via debian/clean. (Closes: #1046705)
+
+ -- gregor herrmann <gregoa@debian.org>  Thu, 02 Nov 2023 16:59:39 +0100
+
+libgd-perl (2.76-4) unstable; urgency=medium
+
+  * Team upload.
+  * Drop libwebp-dev from Build-Depends and use the
+    fixed libgd-dev instead.
+    This also leads to a versioned runtime dependency, which is a
+    positive side effect.
+
+ -- gregor herrmann <gregoa@debian.org>  Sat, 23 Jul 2022 23:56:27 +0200
+
+libgd-perl (2.76-3) unstable; urgency=medium
+
+  * Team upload,
+  * debian/rules: actually use variable we define at the top.
+  * Add libwebp-dev to Build-Depends. Otherwise the configure state fails.
+  * Declare compliance with Debian Policy 4.6.1.
+
+ -- gregor herrmann <gregoa@debian.org>  Mon, 11 Jul 2022 18:44:59 +0200
+
+libgd-perl (2.76-2) unstable; urgency=medium
+
+  * Team upload.
+  * Add a Breaks on older versions of libgd-graph-perl. Cf. #1004926
+
+ -- gregor herrmann <gregoa@debian.org>  Fri, 04 Feb 2022 20:49:42 +0100
+
+libgd-perl (2.76-1) unstable; urgency=medium
+
+  * Team upload.
+  * Import upstream version 2.76.
+
+ -- gregor herrmann <gregoa@debian.org>  Wed, 02 Feb 2022 16:40:03 +0100
+
+libgd-perl (2.75-1) unstable; urgency=medium
+
+  * Team upload.
+  * Import upstream version 2.75.
+  * Update debian/upstream/metadata.
+  * Declare compliance with Debian Policy 4.6.0.
+  * Drop unneeded version constraints from (build) dependencies.
+  * debian/control: remove (incomplete) list of libgd-dev's dependencies
+    from Build-Depends.
+
+ -- gregor herrmann <gregoa@debian.org>  Sat, 29 Jan 2022 19:57:40 +0100
+
 libgd-perl (2.73-1) unstable; urgency=medium
 
   * Team upload.

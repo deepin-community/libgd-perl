@@ -36,6 +36,7 @@ lib/GD/Simple.pm
 t/GD.t
 t/HSV.t
 t/Polyline.t
+t/caller.t
 t/fork.t
 t/test_data/Generic.ttf
 t/test_data/frog.jpg
@@ -83,11 +84,15 @@ t/test_data/tile.gd2
 t/test_data/tile.gif
 t/test_data/tile.jpeg
 t/test_data/tile.png
+t/test_data/windows.bmp
 t/transp.t
+t/windows_bmp.t
 t/z_kwalitee.t
 t/z_manifest.t
 t/z_pod-spell-mistakes.t
 t/z_pod.t
+testcpan.sh
+testlibs.sh
 typemap
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)

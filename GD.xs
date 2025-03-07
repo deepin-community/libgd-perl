@@ -118,9 +118,14 @@ typedef PerlIO          * InputStream;
 #define GDIMAGECREATEFROMJPEG(x) gdImageCreateFromJpeg((FILE*)x)
 #define GDIMAGECREATEFROMGIF(x)  gdImageCreateFromGif((FILE*)x)
 #define GDIMAGECREATEFROMWBMP(x) gdImageCreateFromWBMP((FILE*)x)
+#define GDIMAGECREATEFROMBMP(x)  gdImageCreateFromBmp((FILE*)x)
+#define GDIMAGECREATEFROMTIFF(x) gdImageCreateFromTiff((FILE*)x)
 #define GDIMAGECREATEFROMGD(x)   gdImageCreateFromGd((FILE*)x)
 #define GDIMAGECREATEFROMGD2(x)  gdImageCreateFromGd2((FILE*)x)
 #define GDIMAGECREATEFROMGD2PART(x,a,b,c,d) gdImageCreateFromGd2Part((FILE*)x,a,b,c,d)
+#define GDIMAGECREATEFROMWEBP(x)  gdImageCreateFromWebp((FILE*)x)
+#define GDIMAGECREATEFROMHEIF(x)  gdImageCreateFromHeif((FILE*)x)
+#define GDIMAGECREATEFROMAVIF(x)  gdImageCreateFromAvif((FILE*)x)
 #  endif
 #else
 #  ifdef USE_PERLIO
@@ -129,18 +134,28 @@ typedef PerlIO          * InputStream;
 #define GDIMAGECREATEFROMJPEG(x) gdImageCreateFromJpeg(PerlIO_findFILE(x))
 #define GDIMAGECREATEFROMGIF(x)  gdImageCreateFromGif(PerlIO_findFILE(x))
 #define GDIMAGECREATEFROMWBMP(x) gdImageCreateFromWBMP(PerlIO_findFILE(x))
+#define GDIMAGECREATEFROMBMP(x)  gdImageCreateFromBmp(PerlIO_findFILE(x))
+#define GDIMAGECREATEFROMTIFF(x) gdImageCreateFromTiff(PerlIO_findFILE(x))
 #define GDIMAGECREATEFROMGD(x) gdImageCreateFromGd(PerlIO_findFILE(x))
 #define GDIMAGECREATEFROMGD2(x) gdImageCreateFromGd2(PerlIO_findFILE(x))
 #define GDIMAGECREATEFROMGD2PART(x,a,b,c,d) gdImageCreateFromGd2Part(PerlIO_findFILE(x),a,b,c,d)
+#define GDIMAGECREATEFROMWEBP(x) gdImageCreateFromWebp(PerlIO_findFILE(x))
+#define GDIMAGECREATEFROMHEIF(x) gdImageCreateFromHeif(PerlIO_findFILE(x))
+#define GDIMAGECREATEFROMAVIF(x) gdImageCreateFromAvif(PerlIO_findFILE(x))
 #  else
 #define GDIMAGECREATEFROMPNG(x) gdImageCreateFromPng(x)
 #define GDIMAGECREATEFROMXBM(x) gdImageCreateFromXbm(x)
 #define GDIMAGECREATEFROMJPEG(x) gdImageCreateFromJpeg(x)
 #define GDIMAGECREATEFROMGIF(x) gdImageCreateFromGif(x)
 #define GDIMAGECREATEFROMWBMP(x) gdImageCreateFromWBMP(x)
+#define GDIMAGECREATEFROMBMP(x)  gdImageCreateFromBmp(x)
+#define GDIMAGECREATEFROMTIFF(x) gdImageCreateFromTiff(x)
 #define GDIMAGECREATEFROMGD(x) gdImageCreateFromGd(x)
 #define GDIMAGECREATEFROMGD2(x) gdImageCreateFromGd2(x)
 #define GDIMAGECREATEFROMGD2PART(x,a,b,c,d) gdImageCreateFromGd2Part(x,a,b,c,d)
+#define GDIMAGECREATEFROMWEBP(x) gdImageCreateFromWebp(x)
+#define GDIMAGECREATEFROMHEIF(x) gdImageCreateFromHeif(x)
+#define GDIMAGECREATEFROMAVIF(x) gdImageCreateFromAvif(x)
 #  endif
 #endif
 
@@ -447,6 +462,7 @@ gdnewFromPngData(packname="GD::Image", imageData, ...)
 
 #endif
 
+#ifdef HAVE_GD2
 GD::Image
 gdnewFromGdData(packname="GD::Image", imageData)
 	char *	packname
@@ -481,6 +497,8 @@ gdnewFromGd2Data(packname="GD::Image", imageData)
   OUTPUT:
 	RETVAL
 
+#endif
+
 #ifdef HAVE_JPEG
 GD::Image
 gdnewFromJpegData(packname="GD::Image", imageData, ...)
@@ -501,6 +519,33 @@ gdnewFromJpegData(packname="GD::Image", imageData, ...)
         (ctx->gd_free)(ctx);
         if (!RETVAL)
           croak("gdImageCreateFromJpegCtx error");
+        if (items > 2) truecolor = (int)SvIV(ST(2));
+	gd_chkimagefmt(RETVAL, truecolor);
+  OUTPUT:
+	RETVAL
+
+#endif
+
+#ifdef HAVE_BMP
+GD::Image
+gdnewFromBmpData(packname="GD::Image", imageData, ...)
+	char *	packname
+	SV *    imageData
+  PROTOTYPE: $$;$
+  PREINIT:
+	gdIOCtx* ctx;
+        char*    data;
+        STRLEN   len;
+	dMY_CXT;
+	int      truecolor = truecolor_default;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	data = SvPV(imageData,len);
+        ctx = newDynamicCtx(data,len);
+	RETVAL = (GD__Image) gdImageCreateFromBmpCtx(ctx);
+        (ctx->gd_free)(ctx);
+        if (!RETVAL)
+          croak("gdImageCreateFromBmpCtx error");
         if (items > 2) truecolor = (int)SvIV(ST(2));
 	gd_chkimagefmt(RETVAL, truecolor);
   OUTPUT:
@@ -545,6 +590,7 @@ gd_newFromXbm(packname="GD::Image", filehandle)
   OUTPUT:
 	RETVAL
 
+#ifdef HAVE_GD2
 GD::Image
 gd_newFromGd(packname="GD::Image", filehandle)
 	char *	packname
@@ -571,6 +617,25 @@ gd_newFromGd2(packname="GD::Image", filehandle)
   OUTPUT:
 	RETVAL
 
+GD::Image
+gd_newFromGd2Part(packname="GD::Image", filehandle,srcX,srcY,width,height)
+	char *	packname
+	InputStream	filehandle
+	int	srcX
+	int	srcY
+	int	width
+	int	height
+  PROTOTYPE: $$$$$$
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	RETVAL = GDIMAGECREATEFROMGD2PART(filehandle,srcX,srcY,width,height);
+        if (!RETVAL)
+            croak("gdImageCreateFromGd2Part error");
+  OUTPUT:
+	RETVAL
+
+#endif
+
 #ifdef HAVE_JPEG
 GD::Image
 gd_newFromJpeg(packname="GD::Image", filehandle, ...)
@@ -592,6 +657,53 @@ gd_newFromJpeg(packname="GD::Image", filehandle, ...)
 
 #endif
 
+#ifdef HAVE_TIFF
+GD::Image
+gd_newFromTiff(packname="GD::Image", filehandle, ...)
+	char *	packname
+	InputStream	filehandle
+  PROTOTYPE: $$;$
+  PREINIT:
+	dMY_CXT;
+        int     truecolor = truecolor_default;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	RETVAL = GDIMAGECREATEFROMTIFF(filehandle);
+        if (!RETVAL)
+          croak("gdImageCreateFromTiff error");
+        if (items > 2) truecolor = (int)SvIV(ST(2));
+	gd_chkimagefmt(RETVAL, truecolor);
+  OUTPUT:
+        RETVAL
+
+#endif
+
+#ifdef HAVE_BMP
+GD::Image
+gd_newFromBmp(packname="GD::Image", filehandle)
+	char *	packname
+	InputStream	filehandle
+  PROTOTYPE: $$
+  PREINIT:
+	gdImagePtr img;
+	SV* errormsg;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	img = GDIMAGECREATEFROMBMP(filehandle);
+        if (img == NULL) {
+          errormsg = perl_get_sv("@",0);
+	  if (errormsg != NULL)
+	    sv_setpv(errormsg,"libgd was not built with BMP support\n");
+          else
+            croak("gdImageCreateFromBmp error");
+	  XSRETURN_EMPTY;
+        }
+        RETVAL = img;
+  OUTPUT:
+        RETVAL
+
+#endif
+
 GD::Image
 gd_newFromWBMP(packname="GD::Image", filehandle)
 	char *	packname
@@ -608,7 +720,7 @@ gd_newFromWBMP(packname="GD::Image", filehandle)
 	  if (errormsg != NULL)
 	    sv_setpv(errormsg,"libgd was not built with WBMP support\n");
           else
-            croak("gdImageCreateFromWbmp error");
+            croak("gdImageCreateFromWBMP error");
 	  XSRETURN_EMPTY;
         }
         RETVAL = img;
@@ -639,6 +751,7 @@ gdnewFromXpm(packname="GD::Image", filename)
         }
         RETVAL = img;
 #else
+	PERL_UNUSED_ARG(filename);
         errormsg = perl_get_sv("@",0);
         sv_setpv(errormsg,"libgd was not built with xpm support\n");
         XSRETURN_EMPTY;
@@ -646,29 +759,12 @@ gdnewFromXpm(packname="GD::Image", filename)
   OUTPUT:
         RETVAL
 
-GD::Image
-gd_newFromGd2Part(packname="GD::Image", filehandle,srcX,srcY,width,height)
-	char *	packname
-	InputStream	filehandle
-	int	srcX
-	int	srcY
-	int	width
-	int	height
-  PROTOTYPE: $$$$$$
-  CODE:
-	PERL_UNUSED_ARG(packname);
-	RETVAL = GDIMAGECREATEFROMGD2PART(filehandle,srcX,srcY,width,height);
-        if (!RETVAL)
-            croak("gdImageCreateFromGd2Part error");
-  OUTPUT:
-	RETVAL
-
 #ifdef HAVE_GIF
 GD::Image
 gd_newFromGif(packname="GD::Image", filehandle)
 	char *	packname
 	InputStream	filehandle
-  PROTOTYPE: $$;$
+  PROTOTYPE: $$
   CODE:
 	PERL_UNUSED_ARG(packname);
 	RETVAL = GDIMAGECREATEFROMGIF(filehandle);
@@ -681,7 +777,7 @@ GD::Image
 gdnewFromGifData(packname="GD::Image", imageData)
 	char *	packname
 	SV *    imageData
-  PROTOTYPE: $$;$
+  PROTOTYPE: $$
   PREINIT:
 	gdIOCtx* ctx;
         char*    data;
@@ -694,6 +790,114 @@ gdnewFromGifData(packname="GD::Image", imageData)
         (ctx->gd_free)(ctx);
         if (!RETVAL)
            croak("gdImageCreateFromGifCtx error");
+  OUTPUT:
+	RETVAL
+
+#endif
+
+#ifdef HAVE_WEBP
+GD::Image
+gd_newFromWebp(packname="GD::Image", filehandle)
+	char *	packname
+	InputStream	filehandle
+  PROTOTYPE: $$
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	RETVAL = GDIMAGECREATEFROMWEBP(filehandle);
+	if (!RETVAL)
+            croak("gdImageCreateFromWebp error");
+  OUTPUT:
+	RETVAL
+
+GD::Image
+gdnewFromWebpData(packname="GD::Image", imageData)
+	char *	packname
+	SV *    imageData
+  PROTOTYPE: $$
+  PREINIT:
+	gdIOCtx* ctx;
+        char*    data;
+        STRLEN   len;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	data = SvPV(imageData,len);
+        ctx = newDynamicCtx(data,len);
+	RETVAL = (GD__Image) gdImageCreateFromWebpCtx(ctx);
+        (ctx->gd_free)(ctx);
+        if (!RETVAL)
+           croak("gdImageCreateFromWebpCtx error");
+  OUTPUT:
+	RETVAL
+
+#endif
+
+#ifdef HAVE_HEIF
+GD::Image
+gd_newFromHeif(packname="GD::Image", filehandle)
+	char *	packname
+	InputStream	filehandle
+  PROTOTYPE: $$
+  CODE:
+	PERL_UNUSED_ARG(packname);
+        RETVAL = GDIMAGECREATEFROMHEIF(filehandle);
+	if (!RETVAL)
+            croak("gdImageCreateFromHeif error");
+  OUTPUT:
+	RETVAL
+
+GD::Image
+gdnewFromHeifData(packname="GD::Image", imageData)
+	char *	packname
+	SV *    imageData
+  PROTOTYPE: $$
+  PREINIT:
+	gdIOCtx* ctx;
+        char*    data;
+        STRLEN   len;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	data = SvPV(imageData,len);
+        ctx = newDynamicCtx(data,len);
+	RETVAL = (GD__Image) gdImageCreateFromHeifCtx(ctx);
+        (ctx->gd_free)(ctx);
+        if (!RETVAL)
+           croak("gdImageCreateFromHeifCtx error");
+  OUTPUT:
+	RETVAL
+
+#endif
+
+#ifdef HAVE_HEIF
+GD::Image
+gd_newFromAvif(packname="GD::Image", filehandle)
+	char *	packname
+	InputStream	filehandle
+  PROTOTYPE: $$
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	RETVAL = GDIMAGECREATEFROMAVIF(filehandle);
+	if (!RETVAL)
+            croak("gdImageCreateFromAvif error");
+  OUTPUT:
+	RETVAL
+
+GD::Image
+gdnewFromAvifData(packname="GD::Image", imageData)
+	char *	packname
+	SV *    imageData
+  PROTOTYPE: $$
+  PREINIT:
+	gdIOCtx* ctx;
+        char*    data;
+        STRLEN   len;
+  CODE:
+	PERL_UNUSED_ARG(packname);
+	data = SvPV(imageData,len);
+        ctx = newDynamicCtx(data,len);
+	RETVAL = (GD__Image) gdImageCreateFromAvifCtx(ctx);
+        (ctx->gd_free)(ctx);
+        if (!RETVAL)
+           croak("gdImageCreateFromAvifCtx error");
   OUTPUT:
 	RETVAL
 
@@ -809,13 +1013,18 @@ gdgifanimbegin(image,globalcm=-1,loops=-1)
 	void*         data;
 	int           size;
   CODE:
-#ifdef HAVE_ANIMGIF
+#ifdef HAVE_GIFANIM
     data = (void *) gdImageGifAnimBeginPtr(image,&size,globalcm,loops);
     if (!data)
       croak("gdImageGifAnimBeginPtr error");
     RETVAL = newSVpvn((char*) data,size);
     gdFree(data);
 #else
+    PERL_UNUSED_ARG(data);
+    PERL_UNUSED_ARG(size);
+    PERL_UNUSED_ARG(image);
+    PERL_UNUSED_ARG(globalcm);
+    PERL_UNUSED_ARG(loops);
     die("libgd 2.0.33 or higher required for animated GIF support");
 #endif
   OUTPUT:
@@ -835,7 +1044,7 @@ gdgifanimadd(image,localcm=-1,leftofs=-1,topofs=-1,delay=-1,disposal=-1,previm=0
 	void*         data;
 	int           size;
   CODE:
-#ifdef HAVE_ANIMGIF
+#ifdef HAVE_GIFANIM
     data = (void *) gdImageGifAnimAddPtr(image,&size,localcm,leftofs,topofs,
                                              delay,disposal,previm);
     if (!data)
@@ -843,6 +1052,15 @@ gdgifanimadd(image,localcm=-1,leftofs=-1,topofs=-1,delay=-1,disposal=-1,previm=0
     RETVAL = newSVpvn((char*) data,size);
     gdFree(data);
 #else
+    PERL_UNUSED_ARG(data);
+    PERL_UNUSED_ARG(size);
+    PERL_UNUSED_ARG(image);
+    PERL_UNUSED_ARG(localcm);
+    PERL_UNUSED_ARG(leftofs);
+    PERL_UNUSED_ARG(topofs);
+    PERL_UNUSED_ARG(delay);
+    PERL_UNUSED_ARG(disposal);
+    PERL_UNUSED_ARG(previm);
     die("libgd 2.0.33 or higher required for animated GIF support");
 #endif
   OUTPUT:
@@ -857,17 +1075,46 @@ gdgifanimend(image)
 	int           size;
   CODE:
     PERL_UNUSED_ARG(image);
-#ifdef HAVE_ANIMGIF
+#ifdef HAVE_GIFANIM
     data = (void *) gdImageGifAnimEndPtr(&size);
     if (!data)
       croak("gdImageGifAnimEndPtr error");
     RETVAL = newSVpvn((char*) data,size);
     gdFree(data);
 #else
+    PERL_UNUSED_ARG(data);
+    PERL_UNUSED_ARG(size);
     die("libgd 2.0.33 or higher required for animated GIF support");
 #endif
   OUTPUT:
     RETVAL
+
+#ifdef HAVE_BMP
+SV*
+gdbmp(image,compression=0)
+  GD::Image	image
+  int           compression
+  PROTOTYPE: $
+  PREINIT:
+	SV* errormsg;
+	void*         data;
+	int           size;
+  CODE:
+    data = (void *) gdImageBmpPtr(image,&size,compression);
+    if (data == NULL) {
+      errormsg = perl_get_sv("@",0);
+      if (errormsg != NULL)
+        sv_setpv(errormsg,"libgd was not built with WBMP support\n");
+      else
+        croak("gdImageBmpPtr error");
+      XSRETURN_EMPTY;
+    }
+    RETVAL = newSVpvn((char*) data,size);
+    gdFree(data);
+  OUTPUT:
+    RETVAL
+
+#endif
 
 SV*
 gdwbmp(image,fg)
@@ -919,6 +1166,7 @@ gdgif(image)
 
 #endif
 
+#ifdef HAVE_GD2
 SV*
 gdgd(image)
   GD::Image	image
@@ -952,6 +1200,133 @@ gdgd2(image)
   }
   OUTPUT:
     RETVAL
+
+#endif
+
+#ifdef HAVE_TIFF
+SV*
+gdtiff(image)
+  GD::Image	image
+  PROTOTYPE: $
+  PREINIT:
+	SV* errormsg;
+	void*         data;
+	int           size;
+  CODE:
+    data = (void *) gdImageTiffPtr(image,&size);
+    if (data == NULL) {
+      errormsg = perl_get_sv("@",0);
+      if (errormsg != NULL)
+        sv_setpv(errormsg,"libgd was not built with TIFF support\n");
+      else
+        croak("gdImageTiffPtr error");
+      XSRETURN_EMPTY;
+    }
+    RETVAL = newSVpvn((char*) data,size);
+    gdFree(data);
+  OUTPUT:
+    RETVAL
+
+#endif
+
+#ifdef HAVE_WEBP
+SV*
+gdwebp(image, ...)
+  GD::Image	image
+  PROTOTYPE: $;$
+  PREINIT:
+	SV* errormsg;
+	void*         data;
+	int           size;
+        int           quality;
+  CODE:
+    if (items > 1) {
+      quality=(int)SvIV(ST(1));
+      data = (void *) gdImageWebpPtrEx(image,&size,quality);
+    }
+    else
+      data = (void *) gdImageWebpPtr(image,&size);
+    if (data == NULL) {
+      errormsg = perl_get_sv("@",0);
+      if (errormsg != NULL)
+        sv_setpv(errormsg,"libgd was not built with webp support\n");
+      else
+        croak("gdImageWebpPtr error");
+      XSRETURN_EMPTY;
+    }
+    RETVAL = newSVpvn((char*) data,size);
+    gdFree(data);
+  OUTPUT:
+    RETVAL
+
+#endif
+
+#ifdef HAVE_HEIF
+SV*
+gdheif(image, ...)
+  GD::Image	image
+  PROTOTYPE: $;$
+  PREINIT:
+	SV* errormsg;
+	void*         data;
+	int           size;
+        int           quality;
+        //enum or char* codec: HEVC or AV1
+  CODE:
+    if (items > 1) {
+      quality=(int)SvIV(ST(1));
+      data = (void *) gdImageHeifPtrEx(image,&size,quality,GD_HEIF_CODEC_HEVC,GD_HEIF_CHROMA_444);
+    }
+    else
+      data = (void *) gdImageHeifPtr(image,&size);
+    if (data == NULL) {
+      errormsg = perl_get_sv("@",0);
+      if (errormsg != NULL)
+        sv_setpv(errormsg,"libgd was not built with heif support\n");
+      else
+        croak("gdImageHeifPtr error");
+      XSRETURN_EMPTY;
+    }
+    RETVAL = newSVpvn((char*) data,size);
+    gdFree(data);
+  OUTPUT:
+    RETVAL
+
+#endif
+
+#ifdef HAVE_AVIF
+SV*
+gdavif(image, ...)
+  GD::Image	image
+         PROTOTYPE: $;$$
+  PREINIT:
+	SV* errormsg;
+	void*         data;
+	int           size;
+        int           quality; // -1 for default
+        int           speed;   // 6 is default
+  CODE:
+    if (items > 1) {
+      quality=(int)SvIV(ST(1));
+      speed=items > 2 ? (int)SvIV(ST(2)) : 6; // AVIF_SPEED_DEFAULT
+      data = (void *) gdImageAvifPtrEx(image,&size,quality,speed);
+    }
+    else
+      data = (void *) gdImageAvifPtr(image,&size);
+    if (data == NULL) {
+      errormsg = perl_get_sv("@",0);
+      if (errormsg != NULL)
+        sv_setpv(errormsg,"libgd was not built with avif support\n");
+      else
+        croak("gdImageAvifPtr error");
+      XSRETURN_EMPTY;
+    }
+    RETVAL = newSVpvn((char*) data,size);
+    gdFree(data);
+  OUTPUT:
+    RETVAL
+
+#endif
 
 int
 gdtransparent(image, ...)
@@ -1260,6 +1635,15 @@ gdcopyRotated(dst,src,dstX,dstY,srcX,srcY,srcW,srcH,angle)
 #ifdef VERSION_33
         gdImageCopyRotated(dst,src,dstX,dstY,srcX,srcY,srcW,srcH,angle);
 #else
+        PERL_UNUSED_ARG(dst);
+        PERL_UNUSED_ARG(src);
+        PERL_UNUSED_ARG(dstX);
+        PERL_UNUSED_ARG(dstY);
+        PERL_UNUSED_ARG(srcX);
+        PERL_UNUSED_ARG(srcY);
+        PERL_UNUSED_ARG(srcW);
+        PERL_UNUSED_ARG(srcH);
+        PERL_UNUSED_ARG(angle);
         die("libgd 2.0.33 or higher required for copyRotated support");
 #endif
     }
@@ -2041,11 +2425,35 @@ gdstringFTCircle(image,cx,cy,radius,textRadius,fillPortion,fontname,points,top,b
             RETVAL = 1;
 	  }
 #else
+        /* if we have FT but not FTCIRCLE, this is all that's compiled */
+        PERL_UNUSED_ARG(image);
+        PERL_UNUSED_ARG(cx);
+        PERL_UNUSED_ARG(cy);
+        PERL_UNUSED_ARG(radius);
+        PERL_UNUSED_ARG(textRadius);
+        PERL_UNUSED_ARG(fillPortion);
+        PERL_UNUSED_ARG(fontname);
+        PERL_UNUSED_ARG(points);
+        PERL_UNUSED_ARG(top);
+        PERL_UNUSED_ARG(bottom);
+        PERL_UNUSED_ARG(fgcolor);
   	errormsg = perl_get_sv("@",0);
 	sv_setpv(errormsg,"libgd must be version 2.0.33 or higher to use this function\n");
 	XSRETURN_EMPTY;
 #endif
 #else
+        /* if we don't have FT, this is all that's compiled */
+        PERL_UNUSED_ARG(image);
+        PERL_UNUSED_ARG(cx);
+        PERL_UNUSED_ARG(cy);
+        PERL_UNUSED_ARG(radius);
+        PERL_UNUSED_ARG(textRadius);
+        PERL_UNUSED_ARG(fillPortion);
+        PERL_UNUSED_ARG(fontname);
+        PERL_UNUSED_ARG(points);
+        PERL_UNUSED_ARG(top);
+        PERL_UNUSED_ARG(bottom);
+        PERL_UNUSED_ARG(fgcolor);
   	errormsg = perl_get_sv("@",0);
 	sv_setpv(errormsg,"libgd was not built with FreeType support\n");
 	XSRETURN_EMPTY;
@@ -2061,12 +2469,12 @@ gduseFontConfig(image,flag)
   PROTOTYPE: $$
   CODE:
   {
-#ifdef HAVE_FONTCONFIG
     PERL_UNUSED_ARG(image);
+#ifdef HAVE_FONTCONFIG
     RETVAL = gdFTUseFontConfig(flag);
 #else
     SV* errormsg;
-    PERL_UNUSED_ARG(image);
+    PERL_UNUSED_ARG(flag);
     errormsg = perl_get_sv("@",0);
     sv_setpv(errormsg,"libgd was not built with fontconfig support\n");
     XSRETURN_EMPTY;

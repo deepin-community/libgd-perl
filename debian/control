@@ -8,19 +8,14 @@ Priority: optional
 Build-Depends: debhelper-compat (= 13),
                libextutils-pkgconfig-perl,
                libfont-ttf-perl <!nocheck>,
-               libfreetype6-dev,
-               libgd-dev (>= 2.2.5-5.2),
+               libgd-dev (>= 2.3.3-6~),
                libimage-exiftool-perl <!nocheck>,
-               libjpeg-dev,
-               libpng-dev,
                libregexp-assemble-perl <!nocheck>,
                libtest-fork-perl <!nocheck>,
-               libx11-dev,
-               libxpm-dev,
-               libz-dev,
+               libtest-nowarnings-perl <!nocheck>,
                perl-xs-dev,
                perl:native
-Standards-Version: 4.5.0
+Standards-Version: 4.6.2
 Vcs-Browser: https://salsa.debian.org/perl-team/modules/packages/libgd-perl
 Vcs-Git: https://salsa.debian.org/perl-team/modules/packages/libgd-perl.git
 Homepage: https://github.com/lstein/Perl-GD
@@ -32,7 +27,8 @@ Depends: ${misc:Depends},
          ${perl:Depends},
          ${shlibs:Depends}
 Breaks: libgd-gd2-noxpm-perl (<= 1:2.46-2.1),
-        libgd-gd2-perl (<= 1:2.46-3.1)
+        libgd-gd2-perl (<= 1:2.46-3.1),
+        libgd-graph-perl (<< 1.54~ds-3~)
 Provides: libgd-gd2-noxpm-perl,
           libgd-gd2-perl
 Replaces: libgd-gd2-noxpm-perl (<= 1:2.46-2.1),
