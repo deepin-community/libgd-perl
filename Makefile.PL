@@ -16,8 +16,10 @@ END
 # =====> PATHS: CHECK AND ADJUST <=====
 my (@INC,@LIBPATH,@LIBS,$LIBGD_VERSION);
 my $AUTOCONFIG = 0;      # global set by try_to_autoconfigure() below
+my $HAVE_GD2 = 1;        # until libgd 2.3.1, unset by try_to_autoconfigure()
 
 my ($options,$lib_gd_path,$lib_ft_path,$lib_png_path,$lib_jpeg_path,$lib_xpm_path,
+    $lib_tiff_path,$lib_webp_path,$lib_raqm_path,$lib_heif_path,$lib_avif_path,
     $lib_zlib_path,$lib_fontconfig_path,$force,$FCGI,$gdlib_config_path);
 
 use Getopt::Long;
@@ -27,7 +29,12 @@ my $result = GetOptions("ignore_missing_gd" => \$force,
 			"lib_ft_path=s"   => \$lib_ft_path,
 			"lib_png_path=s"  => \$lib_png_path,
 			"lib_jpeg_path=s" => \$lib_jpeg_path,
+			"lib_tiff_path=s" => \$lib_tiff_path,
 			"lib_xpm_path=s"  => \$lib_xpm_path,
+			"lib_webp_path=s" => \$lib_webp_path,
+			"lib_raqm_path=s" => \$lib_raqm_path,
+			"lib_heif_path=s" => \$lib_heif_path,
+			"lib_avif_path=s" => \$lib_avif_path,
 			"lib_zlib_path=s" => \$lib_zlib_path,
                         "lib_fontconfig_path=s" => \$lib_fontconfig_path,
                         "gdlib_config_path=s" => \$gdlib_config_path,
@@ -47,8 +54,6 @@ If you want to try to compile anyway, please rerun this script with the option -
 END
 }
 
-@INC     = qw(-I/usr/include -I/usr/include/gd) unless @INC;
-@LIBPATH = qw(-L/usr/lib/X11 -L/usr/X11R6/lib -L/usr/X11/lib -L/usr/lib) unless @LIBPATH;
 @LIBS    = qw(-lgd) unless @LIBS;
 
 # support for AMD64 libraries
@@ -67,12 +72,17 @@ Usage: perl Makefile.PL [options]
 Configure GD module.
 
  Options:
-     --options       "JPEG,FT,PNG,GIF,XPM,ANIMGIF"   feature options, separated by commas
+     --options       "JPEG,GD2,FT,PNG,WEBP,GIF,XPM,GIFANIM,WBMP,BMP" feature options, separated by commas
      --lib_gd_path   path            path to libgd (/usr/lib)
      --lib_ft_path   path            path to Freetype library (/usr)
      --lib_png_path  path            path to libpng (/usr)
      --lib_jpeg_path path            path to libjpeg (/usr)
      --lib_xpm_path  path            path to libxpm (/usr)
+     --lib_tiff_path  path           path to libtiff (/usr)
+     --lib_webp_path  path           path to libwebp (/usr)
+     --lib_raqm_path  path           path to libraqm (/usr)
+     --lib_heif_path  path           path to libheif (/usr)
+     --lib_avif_path  path           path to libavif (/usr)
      --lib_zlib_path path            path to libpng (/usr)
      --lib_fontconfig_path path      path to libfontconfig (/usr)
      --gdlib_config_path path        path to gdlib-config (/usr/bin)
@@ -100,35 +110,65 @@ if( defined($lib_ft_path) )
     @INC     = ("-I$lib_ft_path/include", @INC);
     @LIBPATH = ("-L$lib_ft_path/lib", @LIBPATH);
 }
-if( defined($lib_png_path) )  
+if( defined($lib_png_path) )
 {
     print "PNG library used from:      $lib_png_path\n";
     @INC     = ("-I$lib_png_path/include", @INC);
-    @LIBPATH = ("-L$lib_png_path/lib", @LIBPATH); 
+    @LIBPATH = ("-L$lib_png_path/lib", @LIBPATH);
 }
-if( defined($lib_jpeg_path) )  
+if( defined($lib_jpeg_path) )
 {
     print "JPEG library used from:      $lib_jpeg_path\n";
     @INC     = ("-I$lib_jpeg_path/include", @INC);
-    @LIBPATH = ("-L$lib_jpeg_path/lib", @LIBPATH); 
+    @LIBPATH = ("-L$lib_jpeg_path/lib", @LIBPATH);
 }
-if( defined($lib_xpm_path) )  
+if( defined($lib_xpm_path) )
 {
     print "XPM library used from:      $lib_xpm_path\n";
     @INC     = ("-I$lib_xpm_path/include", @INC);
-    @LIBPATH = ("-L$lib_xpm_path/lib", @LIBPATH); 
+    @LIBPATH = ("-L$lib_xpm_path/lib", @LIBPATH);
 }
-if( defined($lib_zlib_path) ) 
+if( defined($lib_zlib_path) )
 {
     print "Zlib library used from:     $lib_zlib_path\n";
     @INC     = ("-I$lib_zlib_path/include", @INC);
-    @LIBPATH = ("-L$lib_zlib_path/lib", @LIBPATH); 
+    @LIBPATH = ("-L$lib_zlib_path/lib", @LIBPATH);
+}
+if( defined($lib_tiff_path) )
+{
+    print "TIFF library used from:     $lib_tiff_path\n";
+    @INC     = ("-I$lib_tiff_path/include", @INC);
+    @LIBPATH = ("-L$lib_tiff_path/lib", @LIBPATH);
 }
 if( defined($lib_fontconfig_path) )
 {
     print "Fontconfig library used from:     $lib_fontconfig_path\n";
     @INC     = ("-I$lib_fontconfig_path/include", @INC);
     @LIBPATH = ("-L$lib_fontconfig_path/lib", @LIBPATH);
+}
+if( defined($lib_webp_path) )
+{
+    print "WEBP library used from:      $lib_webp_path\n";
+    @INC     = ("-I$lib_webp_path/include", @INC);
+    @LIBPATH = ("-L$lib_webp_path/lib", @LIBPATH);
+}
+if( defined($lib_raqm_path) )
+{
+    print "RAQM library used from:      $lib_raqm_path\n";
+    @INC     = ("-I$lib_raqm_path/include", @INC);
+    @LIBPATH = ("-L$lib_raqm_path/lib", @LIBPATH);
+}
+if( defined($lib_heif_path) )
+{
+    print "HEIF library used from:      $lib_heif_path\n";
+    @INC     = ("-I$lib_heif_path/include", @INC);
+    @LIBPATH = ("-L$lib_heif_path/lib", @LIBPATH);
+}
+if( defined($lib_avif_path) )
+{
+    print "AVIF library used from:      $lib_avif_path\n";
+    @INC     = ("-I$lib_avif_path/include", @INC);
+    @LIBPATH = ("-L$lib_avif_path/lib", @LIBPATH);
 }
 if( defined($gdlib_config_path) )
 {
@@ -190,16 +230,32 @@ unless ($AUTOCONFIG || $PREFIX eq '/usr/lib') {
 ##################################################################################################################
 # If build options have not been passed in then prompt for settings
 ##################################################################################################################
-my ($JPEG, $FT, $XPM, $GIF,$ANIMGIF,$UNCLOSEDPOLY,$FONTCONFIG,$PNG,$FTCIRCLE,$VERSION_33);
+my ($JPEG, $GD2, $FT, $XPM, $GIF,$GIFANIM,$UNCLOSEDPOLY,$FONTCONFIG,$PNG,$TIFF,
+    $WEBP,$RAQM,$WBMP,$BMP,$FTCIRCLE,$VERSION_33, $HEIF, $AVIF);
 if( defined($options) )
 {
-  # WBMP is builtin since at least 1.8.0
+    # WBMP is builtin since at least 1.8.0
+  if (!defined($LIBGD_VERSION) || $LIBGD_VERSION ge '1.8.0') {
+    $WBMP = 1;
+  }
   $JPEG      = $options =~ m/JPEG/i;
+  $GD2       = $options =~ m/GD2/i;
   $FT        = $options =~ m/FT|FREETYPE/i;
-  $XPM       = $options =~ m/XPM/i;
+  $XPM       = $options =~ m/XPM/i && join(' ',@LIBS) =~ m/X11/;
+  # strawberry has -lXpm without -lX11
+  if (!$XPM && join(' ',@LIBS) =~ m/-lXpm/) {
+    print "Remove -lXpm and XPM feature without -lX11\n" if $options =~ m/XPM/i;
+    @LIBS = grep { $_ ne '-lXpm' } @LIBS; 
+  }
   $GIF       = $options =~ m/GIF/i;
   $PNG       = $options =~ m/PNG/i;
-  $ANIMGIF   = $GIF && $options =~ m/ANIMGIF/i;
+  $TIFF      = $options =~ m/TIFF/i;
+  $WEBP      = $options =~ m/WEBP/i;
+  $RAQM      = $options =~ m/RAQM/i;
+  $HEIF      = $options =~ m/HEIF/i;
+  $AVIF      = $options =~ m/AVIF/i;
+  $BMP       = $options =~ m/WINDOWS_BMP/i;
+  $GIFANIM   = $GIF && $options =~ m/GIFANIM/i;
   $VERSION_33= $options =~ m/VERSION_33/i; # i.e. 2.0.33 or higher
   $UNCLOSEDPOLY  = $options =~ m/UNCLOSEDPOLY/i;
   $FONTCONFIG  = $options =~ m/FONTCONFIG/i;
@@ -207,17 +263,25 @@ if( defined($options) )
 }
 else
 {
-    warn "\nPlease choose the features that match how libgd was built:\n";
-    $JPEG    = lc prompt('Build JPEG support?','y') eq 'y';
-    $PNG     = lc prompt('Build PNG support?','y') eq 'y';
-    $FT      = lc prompt('Build FreeType support?','y') eq 'y';
-    if ($FT) {
-      $FONTCONFIG = lc prompt('Build fontconfig support?','y') eq 'y';
-      $FTCIRCLE   = lc prompt('Build with FTCircle support?','y') eq 'y';
-    }
-    $GIF     = lc prompt('Build GIF support?','y') eq 'y';
-    $ANIMGIF = $GIF && lc prompt('Build support for animated GIFs?','y') eq 'y';
-    $XPM     = $^O !~ /^freebsd|MSWin32$/ && lc prompt('Build XPM support?','y') eq 'y';
+  warn "\nPlease choose the features that match how libgd was built:\n";
+  $WBMP = 1;
+  $JPEG    = lc prompt('Build JPEG support?','y') eq 'y';
+  $PNG     = lc prompt('Build PNG support?','y') eq 'y';
+  $GD2     = lc prompt('Build GD2 support?','y') eq 'y';
+  $TIFF    = lc prompt('Build TIFF support?','y') eq 'y';
+  $WEBP    = lc prompt('Build WEBP support?','y') eq 'y';
+  $RAQM    = lc prompt('Build RAQM support?','y') eq 'y';
+  $HEIF    = lc prompt('Build HEIF support?','y') eq 'y';
+  $AVIF    = lc prompt('Build AVIF support?','y') eq 'y';
+  $FT      = lc prompt('Build FreeType support?','y') eq 'y';
+  if ($FT) {
+    $FONTCONFIG = lc prompt('Build fontconfig support?','y') eq 'y';
+    $FTCIRCLE   = lc prompt('Build with FTCircle support?','y') eq 'y';
+  }
+  $GIF     = lc prompt('Build GIF support?','y') eq 'y';
+  $GIFANIM = $GIF && lc prompt('Build support for animated GIFs?','y') eq 'y';
+  $XPM     = $^O !~ /^freebsd|MSWin32$/ && lc prompt('Build XPM support?','y') eq 'y';
+  $BMP     = lc prompt('Build BMP support?','y') eq 'y';
 }
 ##################################################################################################################
 
@@ -230,30 +294,45 @@ if (!$AUTOCONFIG) {
   push @LIBS,'-lfreetype'      if $FT;
   push @LIBS,'-ljpeg'          if $JPEG;
   push @LIBS,'-lpng','-lz'     if $PNG;
+  push @LIBS,'-ltiff'          if $TIFF;
+  push @LIBS,'-lwebp'          if $WEBP;
+  push @LIBS,'-lraqm'          if $RAQM;
+  push @LIBS,'-lheif'          if $HEIF;
+  push @LIBS,'-lavif'          if $AVIF;
   push @LIBS,'-lm'             unless $^O eq 'MSWin32';
   push @INC, '-I/lib_root/libjpeg' if ($JPEG && $^O eq 'VMS');
   push @INC, '-I/lib_root/ft2/include/freetype' if ($FT && $^O eq 'VMS');
   push @INC, '-I/X11' if ($XPM && $^O eq 'VMS');
 
-  # FreeBSD 3.3 with libgd built from ports croaks if -lXpm is specified 
-  if ($^O ne 'freebsd' && $^O ne 'MSWin32') { 
-    push @LIBS,'-lX11','-lXpm' if $XPM; 
+  # FreeBSD 3.3 with libgd built from ports croaks if -lXpm is specified
+  if ($^O ne 'freebsd' && $^O ne 'MSWin32') {
+    push @LIBS,'-lX11','-lXpm' if $XPM;
   }
+} else {
+  print "External LIBS:              ", join(' ',$ENV{'GD_LIBS'},@LIBPATH,@LIBS),"\n";
 }
 
 my $CAPI = defined $ExtUtils::MakeMaker::CAPI_support;
 my $DEFINES = '';
+$DEFINES    .= ' -DHAVE_WBMP'    if $WBMP; # since 1.8.0
 $DEFINES    .= ' -DHAVE_JPEG'    if $JPEG;
 $DEFINES    .= ' -DHAVE_FT'      if $FT;
 $DEFINES    .= ' -DHAVE_XPM'     if $XPM;
 $DEFINES    .= ' -DHAVE_GIF'     if $GIF;
+$DEFINES    .= ' -DHAVE_GD2'     if $HAVE_GD2;
 $DEFINES    .= ' -DHAVE_PNG'     if $PNG;
+$DEFINES    .= ' -DHAVE_TIFF'    if $TIFF;
 $DEFINES    .= ' -DFCGI'         if $FCGI;
-$DEFINES    .= ' -DHAVE_ANIMGIF' if $ANIMGIF;
+$DEFINES    .= ' -DHAVE_GIFANIM' if $GIFANIM;
 $DEFINES    .= ' -DVERSION_33'   if $VERSION_33;
 $DEFINES    .= ' -DHAVE_UNCLOSEDPOLY' if $UNCLOSEDPOLY;
 $DEFINES    .= ' -DHAVE_FONTCONFIG'   if $FONTCONFIG;
 $DEFINES    .= ' -DHAVE_FTCIRCLE'  if $FTCIRCLE;
+$DEFINES    .= ' -DHAVE_WEBP'    if $WEBP;
+$DEFINES    .= ' -DHAVE_RAQM'    if $RAQM;
+$DEFINES    .= ' -DHAVE_HEIF'    if $HEIF;
+$DEFINES    .= ' -DHAVE_AVIF'    if $AVIF;
+$DEFINES    .= ' -DHAVE_BMP'     if $BMP; # since 2.1.0
 $DEFINES    .= " -DLIBGD_VERSION=\"$LIBGD_VERSION\"" if defined($LIBGD_VERSION);
 open F,">.config.cache";
 print F $DEFINES,"\n";
@@ -263,10 +342,17 @@ my $CCFLAGS = $Config{ccflags};
 $CCFLAGS .= " -Wall -Wextra -Wformat=1" if $Config{gccversion} and $] > 5.020;
 # hardened CFLAGS for testing
 #$CCFLAGS .= ' -D_GNU_SOURCE -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fstack-protector-strong -grecord-gcc-switches';
+my $LDDLFLAGS = $Config{lddlflags};
+# fixup mingw linker problems with empty weak symbols
+$LDDLFLAGS .= " -Wl,--verbose" if $Config{gccversion} and $^O eq 'MSWin32';
+my $LD = $Config{ld};
+if ($LD eq 'g++' and $^O eq 'MSWin32') {
+  $LD = 'gcc';
+}
 
 my %WriteMakefileArgs = (
     'NAME'	=> 'GD',
-    'ABSTRACT'  => 'Perl interface to the gd2 graphics library',
+    'ABSTRACT'  => 'Perl interface to the libgd graphics library',
     'VERSION_FROM'	=> 'lib/GD.pm',
     'PREREQ_PM' => {
         'Math::Trig' => 0,
@@ -278,39 +364,59 @@ my %WriteMakefileArgs = (
     'TEST_REQUIRES' => {
         'Test::More' => 0.88,
         'Test::Fork' => 0.02,
+        'Test::NoWarnings'  => '1.00',
     },
     'PL_FILES'  => {'bdf_scripts/bdf2gdfont_pl.PL' => 'bdf_scripts/bdf2gdfont.pl',
                     'lib/GD/Image_pm.PL' => 'lib/GD/Image.pm'},
     'LIBS'      => [join(' ',$ENV{'GD_LIBS'},@LIBPATH,@LIBS)],
     'INC'       => join(' ',$ENV{'GD_INC'},@INC),
 
+    'LD'        => $LD,
     'CCFLAGS'   => $CCFLAGS,
+    'LDDLFLAGS'   => $LDDLFLAGS,
     'EXE_FILES' => ['bdf_scripts/bdf2gdfont.pl'],
     'AUTHOR'    => 'Lincoln Stein <lincoln.stein@gmail.com>',
      # Maintained by Reini Urban now
      $CAPI ? ('CAPI'      => 'TRUE') : (),
     'DEFINE'	=> $DEFINES,
-    'clean'     => { 
+    'clean'     => {
         FILES => '.config.cache cover_db MANIFEST.git *.gcov GD.gcda GD.gcno'
                 .' META.yml META.json'
      },
     'LICENSE'   => 'perl_5',
 
     'META_MERGE' => {
-         recommends => {
+        "meta-spec" => { version => 2 },
+        recommends => {
+            'ExtUtils::PkgConfig' => 0,
+            'Math::Trig'        => 0,
             'ExtUtils::Constant'=> '0.23',
             'Test::More'        => '0.88',
-            'Test::Kwalitee'    => 0,
-            'Class::XSAccessor' => 0,
-            'Text::CSV_XS'      => 0,
-            'List::MoreUtils'   => 0,
-            'Pod::Spell::CommonMistakes' => 0,
-            'Test::Pod'         => '1.00',
-         },
-         resources => {
-             repository => 'http://github.com/lstein/Perl-GD',
-             license    => 'http://dev.perl.org/licenses/',
-         },
+            'Test::Fork'        => '0.02',
+            'Test::NoWarnings'  => '1.00',
+        },
+        resources => {
+            repository => {
+                web => "https://github.com/lstein/Perl-GD",
+                url => "git://github.com/lstein/Perl-GD.git",
+                type => 'git',
+            },
+            license => "https://dev.perl.org/licenses/",
+        },
+        prereqs => {
+            develop => {
+                requires => {
+                    'Class::XSAccessor' => 0,
+                    'Text::CSV_XS'      => 0,
+                    'List::MoreUtils'   => 0,
+                    'Test::Kwalitee'    => 0,
+                    'Pod::Spell::CommonMistakes' => 0,
+                    'Test::Pod'         => '1.00',
+                    'Algorithm::Diff'   => 0,
+                    'Test::NoWarnings'  => '1.00',
+                },
+            },
+        },
     },
     SIGN => 1,
 );
@@ -458,7 +564,34 @@ sub try_to_autoconfigure {
       # Requires.private:   zlib  libpng  freetype2 >= 9.8.3  fontconfig  libjpeg  xpm  libtiff-4
       # Libs.private:   -L/opt/local/lib -lz  -L/opt/local/lib -lpng16  -L/opt/local/lib -lfreetype  -L/opt/local/lib -lfontconfig -lfreetype   -ljpeg  -L/opt/local/lib -lXpm -lX11  -L/opt/local/lib -ltiff   -lwebp
       # not in the hash!
-      $features = 'GD_GIF GD_OPENPOLYGON GD_ZLIB GD_PNG GD_FREETYPE GD_FONTCONFIG GD_JPEG GD_XPM GD_TIFF GD_WEBP';
+      # check the .pc file from $config{pkg}
+      if ($config{pkg} and -e $config{pkg}) {
+        my $F;
+        open $F, "<", $config{pkg};
+        my $private;
+        while (<$F>) {
+          next unless /^Requires.private/;
+          $private = $_;
+        }
+        close $F;
+        $features = 'GD_GIF GD_OPENPOLYGON';
+        $features .= ' GD_ZLIB' if $private =~ / zlib /;
+        $features .= ' GD_PNG' if $private =~ / libpng /;
+        $features .= ' GD_FREETYPE' if $private =~ / freetype/;
+        $features .= ' GD_FONTCONFIG' if $private =~ / fontconfig/;
+        $features .= ' GD_RAQM' if $private =~ / raqm/;
+        $features .= ' GD_JPEG' if $private =~ / libjpeg/;
+        $features .= ' GD_XPM' if $private =~ / xpm/;
+        $features .= ' GD_TIFF' if $private =~ / libtiff/;
+        $features .= ' GD_WEBP' if $private =~ / libwebp/;
+        $features .= ' GD_HEIF' if $private =~ / libheif/;
+        $features .= ' GD_AVIF' if $private =~ / libavif/;
+      } else {
+        $features = 'GD_GIF GD_OPENPOLYGON GD_ZLIB GD_PNG GD_FREETYPE GD_FONTCONFIG GD_JPEG GD_XPM GD_TIFF GD_WEBP';
+        #$features .= 'GD_WEBP' if $version ge '2.3.0';;
+        $features .= ' GD_AVIF' if $version ge '2.3.2';
+        $features .= ' GD_HEIF' if $version ge '2.3.3';
+      }
       $AUTOCONFIG++;
   } else {
       $AUTOCONFIG++;
@@ -492,11 +625,33 @@ sub try_to_autoconfigure {
     $options = $features;
 
     my ($release, $major, $minor) = $version =~ /^(\d+)\.(\d+)\.(\d+)/;
-    $options     .= " GD_UNCLOSEDPOLY GD_ANIMGIF GD_FTCIRCLE VERSION_33"
+    $options     .= " GD_UNCLOSEDPOLY GD_FTCIRCLE VERSION_33"
       if defined($minor)
       && ($release > 2
           || ($release == 2 && $major > 0)
           || ($release == 2 && $major == 0 && $minor >= 33));
+    $options     .= " WINDOWS_BMP"
+      if defined($minor)
+      && ($release > 2
+          || ($release == 2 && $major > 0));
+    if (defined($minor)
+        && ($release > 2
+            || ($release == 2 && $major > 3)
+            || ($release == 2 && $major == 3 && $minor >= 2))) {
+      $HAVE_GD2 = 0;
+      $AVIF = 1;
+    } else {
+      $options     .= " GD2";
+      $HAVE_GD2 = 1;
+      $AVIF = 0;
+      $HEIF = 0;
+    }
+    if (defined($minor)
+        && ($release > 2
+            || ($release == 2 && $major > 3)
+            || ($release == 2 && $major == 3 && $minor >= 3))) {
+      $HEIF = 1;
+    }
   }
 
   if ($config) {
